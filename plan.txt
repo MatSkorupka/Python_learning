@@ -1,0 +1,25 @@
+Python Fundamentals (We should start here):
+
+Variables and data types
+Control structures (if, for, while)
+Functions and methods
+Lists, dictionaries, sets, tuples
+List comprehensions
+Loops and iterations
+
+
+Advanced Python Concepts:
+
+Object-Oriented Programming (OOP)
+Generators
+Decorators
+Error handling
+Working with files
+
+
+Data Engineering with Python (Where we are now):
+
+Pandas basics (current topic)
+Advanced pandas
+Working with databases
+PySpark
