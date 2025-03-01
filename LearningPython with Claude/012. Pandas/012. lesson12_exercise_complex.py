@@ -170,7 +170,17 @@ print(monthy_category_sales)
 # 3. Który region ma najwyższe rabaty?
 
 # Twój kod tutaj:
+discount_percent_mean = df.groupby('category')['discount_percent'].mean().sort_values(ascending=False)
+print(discount_percent_mean)
 
+analysis = df.groupby('category').agg({
+    'discount_percent': 'mean',
+    'quantity': 'sum'
+})
+print(analysis)
+
+discount_percent_region = df.groupby('region')['discount_percent'].mean().sort_values(ascending=False)
+print(discount_percent_region)
 
 
 # ZADANIE 6: Wizualizacja danych
