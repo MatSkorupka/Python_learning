@@ -191,7 +191,43 @@ print(discount_percent_region)
 # 3. Wykres kołowy przedstawiający udział regionów w sprzedaży
 
 # Twój kod tutaj:
+# TASK 6: Data Visualization
+import matplotlib.pyplot as plt
 
+# 1. Bar chart for sales by category
+plt.figure(figsize=(10, 6))
+category_sales = df.groupby('category')['total_amount'].sum().sort_values(ascending=False)
+category_sales.plot(kind='bar', color='skyblue')
+plt.title('Sales by Category', fontsize=14)
+plt.xlabel('Category', fontsize=12)
+plt.ylabel('Total Sales ($)', fontsize=12)
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+# 2. Line chart for monthly sales
+plt.figure(figsize=(12, 6))
+monthly_sales = df.groupby(['year', 'month'])['total_amount'].sum().reset_index()
+# Create a proper date column for better x-axis plotting
+monthly_sales['date'] = monthly_sales.apply(lambda x: pd.Timestamp(int(x['year']), int(x['month']), 1), axis=1)
+plt.plot(monthly_sales['date'], monthly_sales['total_amount'], marker='o', linewidth=2, color='#1f77b4')
+plt.title('Monthly Sales Trend', fontsize=14)
+plt.xlabel('Month', fontsize=12)
+plt.ylabel('Total Sales ($)', fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+# 3. Pie chart for regional sales distribution
+plt.figure(figsize=(8, 8))
+region_sales = df.groupby('region')['total_amount'].sum()
+plt.pie(region_sales, labels=region_sales.index, autopct='%1.1f%%', startangle=90, 
+        colors=['#ff9999','#66b3ff','#99ff99','#ffcc99'])
+plt.title('Sales Distribution by Region', fontsize=14)
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+plt.tight_layout()
+plt.show()
 
 
 # ZADANIE 7: Zaawansowana analiza
@@ -202,7 +238,78 @@ print(discount_percent_region)
 # 3. Przeanalizuj korelację między wielkością rabatu a ilością sprzedanych produktów
 
 # Twój kod tutaj:
+# TASK 7: Advanced Analysis
 
+# TASK 7: Advanced Analysis
+
+# 1. Find products with the highest month-over-month growth
+# First, create a pivot table of monthly sales by product
+monthly_product_pivot = df.groupby(['year', 'month', 'product'])['total_amount'].sum().reset_index()
+monthly_product_pivot['year_month'] = monthly_product_pivot['year'].astype(str) + '-' + monthly_product_pivot['month'].astype(str).str.zfill(2)
+
+# Pivot the data to have products as rows and months as columns
+product_growth = monthly_product_pivot.pivot_table(
+    index='product', 
+    columns='year_month', 
+    values='total_amount', 
+    fill_value=0
+)
+
+# Calculate month-over-month growth for each product
+for i in range(1, len(product_growth.columns)):
+    prev_month = product_growth.columns[i-1]
+    curr_month = product_growth.columns[i]
+    growth_col = f'growth_{prev_month}_to_{curr_month}'
+    product_growth[growth_col] = (product_growth[curr_month] - product_growth[prev_month]) / product_growth[prev_month].replace(0, 1) * 100
+
+# Find average growth for each product (excluding infinite or NaN values)
+growth_cols = [col for col in product_growth.columns if col.startswith('growth_')]
+product_growth['avg_growth'] = product_growth[growth_cols].replace([np.inf, -np.inf], np.nan).mean(axis=1)
+
+# Get top 5 products with highest average growth
+top_growing_products = product_growth.sort_values('avg_growth', ascending=False).head(5)
+print("Top 5 Products with Highest Month-over-Month Growth:")
+print(top_growing_products[['avg_growth'] + growth_cols])
+
+# 2. Identify days of the week with highest sales
+# Add day of week column
+df['day_of_week'] = df['date'].dt.day_name()
+
+# Analyze sales by day of week
+day_sales = df.groupby('day_of_week')['total_amount'].agg(['sum', 'mean', 'count'])
+# Sort by days of week in proper order
+days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+day_sales = day_sales.reindex(days_order)
+print("\nSales by Day of Week:")
+print(day_sales)
+
+# 3. Analyze correlation between discount and quantity
+# Option 1: Calculate direct correlation
+correlation = df['discount_percent'].corr(df['quantity'])
+print(f"\nCorrelation between discount percentage and quantity: {correlation:.4f}")
+
+# Option 2: Analyze average quantity by discount ranges
+df['discount_range'] = pd.cut(df['discount_percent'], 
+                             bins=[-1, 0, 5, 10, 15],
+                             labels=['0%', '1-5%', '6-10%', '11-15%'])
+
+discount_quantity_analysis = df.groupby('discount_range').agg({
+    'quantity': ['mean', 'sum', 'count'],
+    'total_amount': ['sum', 'mean']
+})
+
+print("\nQuantity and Sales Analysis by Discount Range:")
+print(discount_quantity_analysis)
+
+# Option 3: Plot scatter plot to visualize relationship
+plt.figure(figsize=(10, 6))
+plt.scatter(df['discount_percent'], df['quantity'], alpha=0.5)
+plt.title('Relationship Between Discount and Quantity', fontsize=14)
+plt.xlabel('Discount Percentage', fontsize=12)
+plt.ylabel('Quantity Purchased', fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
 
 
 # ZADANIE 8: Zapisz przetworzone dane i wyniki
