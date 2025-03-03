@@ -319,7 +319,84 @@ plt.show()
 # 2. Zapisz tabele przestawne dla kategorii i regionów do pliku Excel
 # 3. Zapisz wykresy do plików PNG
 
-# Twój kod tutaj:
+# TASK 8: Save processed data and results
+
+# 1. Save the processed DataFrame to CSV
+df.to_csv('processed_sales_data.csv', index=False)
+print("Processed data saved to 'processed_sales_data.csv'")
+
+# 2. Save pivot tables for categories and regions to Excel
+with pd.ExcelWriter('sales_analysis.xlsx') as writer:
+    # Create and save category pivot table
+    category_pivot = pd.pivot_table(df, 
+                                   values='total_amount',
+                                   index='category',
+                                   columns='month',
+                                   aggfunc='sum',
+                                   margins=True,
+                                   margins_name='Total')
+    category_pivot.to_excel(writer, sheet_name='Category_Analysis')
+    
+    # Create and save region pivot table
+    region_pivot = pd.pivot_table(df,
+                                 values='total_amount',
+                                 index='region',
+                                 columns=['month'],
+                                 aggfunc='sum',
+                                 margins=True,
+                                 margins_name='Total')
+    region_pivot.to_excel(writer, sheet_name='Region_Analysis')
+    
+    # Create and save product pivot table
+    product_pivot = pd.pivot_table(df,
+                                  values=['total_amount', 'quantity'],
+                                  index='product',
+                                  aggfunc={'total_amount': 'sum', 'quantity': 'sum'},
+                                  margins=True,
+                                  margins_name='Total')
+    product_pivot.to_excel(writer, sheet_name='Product_Analysis')
+
+print("Pivot tables saved to 'sales_analysis.xlsx'")
+
+# 3. Save charts to PNG files
+# Bar chart for sales by category
+plt.figure(figsize=(10, 6))
+category_sales = df.groupby('category')['total_amount'].sum().sort_values(ascending=False)
+category_sales.plot(kind='bar', color='skyblue')
+plt.title('Sales by Category', fontsize=14)
+plt.xlabel('Category', fontsize=12)
+plt.ylabel('Total Sales ($)', fontsize=12)
+plt.xticks(rotation=45)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig('category_sales_chart.png', dpi=300)
+plt.close()
+
+# Line chart for monthly sales
+plt.figure(figsize=(12, 6))
+monthly_sales = df.groupby(['year', 'month'])['total_amount'].sum().reset_index()
+monthly_sales['date'] = monthly_sales.apply(lambda x: pd.Timestamp(int(x['year']), int(x['month']), 1), axis=1)
+plt.plot(monthly_sales['date'], monthly_sales['total_amount'], marker='o', linewidth=2, color='#1f77b4')
+plt.title('Monthly Sales Trend', fontsize=14)
+plt.xlabel('Month', fontsize=12)
+plt.ylabel('Total Sales ($)', fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig('monthly_sales_chart.png', dpi=300)
+plt.close()
+
+# Pie chart for regional sales distribution
+plt.figure(figsize=(8, 8))
+region_sales = df.groupby('region')['total_amount'].sum()
+plt.pie(region_sales, labels=region_sales.index, autopct='%1.1f%%', startangle=90,
+        colors=['#ff9999','#66b3ff','#99ff99','#ffcc99'])
+plt.title('Sales Distribution by Region', fontsize=14)
+plt.axis('equal')
+plt.tight_layout()
+plt.savefig('region_sales_chart.png', dpi=300)
+plt.close()
+
+print("Charts saved as PNG files")
 
 
 # Rozwiązania do zadań:
