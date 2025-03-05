@@ -122,13 +122,18 @@ In this exercise, you'll work with the product_sales DataFrame to use MultiIndex
 """
 
 # 2.1 Create a MultiIndex DataFrame by setting ['category', 'product', 'region'] as index
-# YOUR CODE HERE
+product_sales.set_index(['category', 'product', 'region'], inplace=True)
+print("MultiIndex DataFrame:")
+print(product_sales.head())
 
 # 2.2 Calculate the total sales amount for each category-product combination
-# YOUR CODE HERE
+sales_by_region = product_sales.groupby(['category', 'product', 'region'])['total_price'].sum()
+print(sales_by_region)
 
 # 2.3 Unstack the region level to create a DataFrame with regions as columns
-# YOUR CODE HERE
+region_columns = sales_by_region.unstack(level='region')
+print("Sales with regions as columns:")
+print(region_columns.head())
 
 # 2.4 Find the product with the highest sales in each region
 # YOUR CODE HERE
