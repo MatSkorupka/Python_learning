@@ -136,11 +136,12 @@ print("Sales with regions as columns:")
 print(region_columns.head())
 
 # 2.4 Find the product with the highest sales in each region
-# YOUR CODE HERE
+highest_sales_by_region = product_sales.loc[product_sales.groupby('region')['total_price'].idxmax()]
+print(highest_sales_by_region)
 
 # 2.5 Use .xs() to extract all sales data for the 'Laptop' product across all regions
-# YOUR CODE HERE
-
+laptop_sales = product_sales.xs('Laptop', level='product')
+print(laptop_sales)
 
 # --------------------------------------------------------------------------------------
 # EXERCISE 3: Performance Optimization
