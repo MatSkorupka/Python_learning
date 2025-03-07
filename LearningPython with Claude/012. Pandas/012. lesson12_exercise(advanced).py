@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import time
 
 # Generate sample data for our exercises
 def generate_data():
@@ -151,19 +152,83 @@ In this exercise, you'll practice optimizing Pandas operations for better perfor
 """
 
 # 3.1 Check the memory usage of the product_sales DataFrame
-# YOUR CODE HERE
+memory_in_bytes = product_sales.memory_usage(deep=True).sum()
+print(f"Memory usage: {memory_in_bytes / 1024**2:.2f} MB")
 
 # 3.2 Convert the 'category', 'product', and 'region' columns to categorical data type 
 # and measure the memory savings
-# YOUR CODE HERE
+# First, let's check the current memory usage
+before_memory = product_sales.memory_usage(deep=True).sum()
+
+# Convert specified columns to categorical data type
+product_sales['category'] = product_sales['category'].astype('category')
+product_sales['product'] = product_sales['product'].astype('category')
+product_sales['region'] = product_sales['region'].astype('category')
+
+# Check the memory usage after conversion
+after_memory = product_sales.memory_usage(deep=True).sum()
+
+# Calculate and display the memory savings
+memory_saved = before_memory - after_memory
+percent_saved = (memory_saved / before_memory) * 100
+
+print(f"Memory before: {before_memory / 1024**2:.2f} MB")
+print(f"Memory after: {after_memory / 1024**2:.2f} MB")
+print(f"Memory saved: {memory_saved / 1024**2:.2f} MB ({percent_saved:.2f}%)")
 
 # 3.3 Use vectorized operations to calculate the profit for each sale 
 # (assume cost is 60% of unit_price)
-# YOUR CODE HERE
+# Calculate the cost (60% of unit_price)
+product_sales['cost'] = product_sales['unit_price'] * 0.6
+
+# Calculate the profit (unit_price - cost) * quantity
+product_sales['profit'] = (product_sales['unit_price'] - product_sales['cost']) * product_sales['quantity']
+
+# Display the first few rows to verify the calculation
+product_sales[['unit_price', 'cost', 'quantity', 'profit']].head()
+print(product_sales)
 
 # 3.4 Compare the performance of iterrows() vs vectorized operations for a simple calculation
 # (e.g., calculating the total value of each transaction including a 5% tax)
-# YOUR CODE HERE
+# Define both calculation methods
+def using_iterrows(df):
+    # Create a new column to store results
+    df['total_with_tax_iterrows'] = 0.0
+    
+    # Start timer
+    start_time = time.time()
+    
+    # Use iterrows to calculate total with tax
+    for index, row in df.iterrows():
+        df.at[index, 'total_with_tax_iterrows'] = row['unit_price'] * row['quantity'] * 1.05
+    
+    # Calculate execution time
+    execution_time = time.time() - start_time
+    return execution_time
+
+def using_vectorized(df):
+    # Start timer
+    start_time = time.time()
+    
+    # Use vectorized operation to calculate total with tax
+    df['total_with_tax_vectorized'] = df['unit_price'] * df['quantity'] * 1.05
+    
+    # Calculate execution time
+    execution_time = time.time() - start_time
+    return execution_time
+
+# Run both methods and compare times
+iterrows_time = using_iterrows(product_sales)
+vectorized_time = using_vectorized(product_sales)
+
+# Verify that both methods produce the same results
+is_equal = product_sales['total_with_tax_iterrows'].equals(product_sales['total_with_tax_vectorized'])
+
+# Print results
+print(f"iterrows execution time: {iterrows_time:.6f} seconds")
+print(f"Vectorized execution time: {vectorized_time:.6f} seconds")
+print(f"Vectorized operations are {iterrows_time/vectorized_time:.1f}x faster")
+print(f"Results are identical: {is_equal}")
 
 
 # --------------------------------------------------------------------------------------
