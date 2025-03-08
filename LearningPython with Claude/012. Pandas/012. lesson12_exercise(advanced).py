@@ -243,11 +243,33 @@ In this exercise, you'll practice advanced grouping and aggregation techniques.
 # - Average unit price
 # - Minimum and maximum discount
 # - Total sales amount
-# YOUR CODE HERE
+
+product_aggs = product_sales.groupby('product').agg({
+    'quantity': 'sum',             # Total quantity sold
+    'unit_price': 'mean',          # Average unit price
+    'discount': ['min', 'max'],    # Min and max discount
+    'total_price': 'sum'           # Total sales amount
+})
+
+print("Product aggregations:")
+print(product_aggs)
+
 
 # 4.2 Create a custom aggregation function to calculate the price range 
 # (max price - min price) for each product, and include it in your aggregations
-# YOUR CODE HERE
+def price_range(x):
+    return x.max() - x.min()
+
+# Apply the function along with other aggregations
+product_aggs = product_sales.groupby('product').agg({
+    'quantity': 'sum',                          # Total quantity sold
+    'unit_price': ['min', 'max', price_range],  # Min, max, and range
+    'discount': ['min', 'max'],                 # Min and max discount
+    'total_price': 'sum'                        # Total sales amount
+})
+
+print("Product aggregations with price range:")
+print(product_aggs)
 
 # 4.3 Use transform to add a column showing what percentage of the category's 
 # total sales each product represents
