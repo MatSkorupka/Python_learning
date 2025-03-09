@@ -273,10 +273,36 @@ print(product_aggs)
 
 # 4.3 Use transform to add a column showing what percentage of the category's 
 # total sales each product represents
-# YOUR CODE HERE
+
+# First, make sure we're working with the original DataFrame (not grouped)
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Calculate the category totals using transform
+category_totals = product_sales.groupby('category')['total_price'].transform('sum')
+
+# Calculate each product's percentage of its category total
+product_sales['category_percentage'] = (product_sales['total_price'] / category_totals) * 100
+
+# View the results
+print("Products with category percentage:")
+print(product_sales[['category', 'product', 'total_price', 'category_percentage']].head(15))
 
 # 4.4 Use filter to select only products that have more than 50 total units sold
-# YOUR CODE HERE
+
+# Group by product and filter based on total quantity
+popular_products = product_sales.groupby('product').filter(lambda x: x['quantity'].sum() > 50)
+
+# Check how many products were filtered
+original_products = product_sales['product'].nunique()
+filtered_products = popular_products['product'].nunique()
+
+print(f"Original number of products: {original_products}")
+print(f"Products with more than 50 units sold: {filtered_products}")
+
+# View the filtered DataFrame
+print("\nPopular products data:")
+print(popular_products[['product', 'quantity']].head(10))
 
 # 4.5 Calculate the cumulative sales amount for each product over time
 # YOUR CODE HERE
