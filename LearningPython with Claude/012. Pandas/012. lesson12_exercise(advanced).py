@@ -305,7 +305,38 @@ print("\nPopular products data:")
 print(popular_products[['product', 'quantity']].head(10))
 
 # 4.5 Calculate the cumulative sales amount for each product over time
-# YOUR CODE HERE
+# First, ensure the data is sorted by date
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Convert 'date' to datetime if it's not already
+product_sales['date'] = pd.to_datetime(product_sales['date'])
+
+# Sort by product and date
+product_sales_sorted = product_sales.sort_values(['product', 'date'])
+
+# Group by product and calculate cumulative sum of total_price
+product_sales_sorted['cumulative_sales'] = product_sales_sorted.groupby('product')['total_price'].cumsum()
+
+# Display results
+print("Cumulative sales by product over time:")
+print(product_sales_sorted[['product', 'date', 'total_price', 'cumulative_sales']].head(15))
+
+# To visualize the cumulative sales for specific products:
+top_products = product_sales_sorted.groupby('product')['total_price'].sum().nlargest(3).index
+
+plt.figure(figsize=(12, 6))
+for product in top_products:
+    product_data = product_sales_sorted[product_sales_sorted['product'] == product]
+    plt.plot(product_data['date'], product_data['cumulative_sales'], label=product)
+
+plt.title('Cumulative Sales for Top 3 Products')
+plt.xlabel('Date')
+plt.ylabel('Cumulative Sales ($)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 
 
 # --------------------------------------------------------------------------------------
@@ -318,7 +349,21 @@ sales analysis.
 
 # 5.1 For each product, find the region with the highest sales and the region 
 # with the lowest sales
-# YOUR CODE HERE
+# First, calculate total sales for each product-region combination
+product_region_sales = product_sales.groupby(['product', 'region'])['total_price'].sum().reset_index()
+
+# Create a pivot table with products as rows and regions as columns
+product_by_region = product_region_sales.pivot(index='product', columns='region', values='total_price')
+
+# Find the region with highest and lowest sales for each product
+product_region_analysis = pd.DataFrame(index=product_by_region.index)
+product_region_analysis['highest_sales_region'] = product_by_region.idxmax(axis=1)
+product_region_analysis['highest_sales_value'] = product_by_region.max(axis=1)
+product_region_analysis['lowest_sales_region'] = product_by_region.idxmin(axis=1)
+product_region_analysis['lowest_sales_value'] = product_by_region.min(axis=1)
+
+print("Region analysis by product:")
+print(product_region_analysis)
 
 # 5.2 Create a pivot table showing monthly sales by product category
 # YOUR CODE HERE
