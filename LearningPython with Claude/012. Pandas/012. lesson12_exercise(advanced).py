@@ -366,10 +366,70 @@ print("Region analysis by product:")
 print(product_region_analysis)
 
 # 5.2 Create a pivot table showing monthly sales by product category
-# YOUR CODE HERE
+# Make sure we have a clean DataFrame to work with
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Convert date to datetime if needed and extract year-month
+product_sales['date'] = pd.to_datetime(product_sales['date'])
+product_sales['year_month'] = product_sales['date'].dt.to_period('M')
+
+# Create pivot table with categories as rows and months as columns
+monthly_category_sales = pd.pivot_table(
+    product_sales,
+    values='total_price',
+    index='category',
+    columns='year_month',
+    aggfunc='sum',
+    fill_value=0
+)
+
+print("Monthly sales by product category:")
+print(monthly_category_sales)
+
+# Optionally create a visualization
+plt.figure(figsize=(14, 7))
+monthly_category_sales.T.plot(kind='bar', stacked=True, ax=plt.gca())
+plt.title('Monthly Sales by Product Category')
+plt.xlabel('Month')
+plt.ylabel('Sales ($)')
+plt.legend(title='Category')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
 
 # 5.3 Calculate month-over-month growth rate for each product
-# YOUR CODE HERE
+# Make sure we have a clean DataFrame to work with
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Convert date to datetime if needed
+product_sales['date'] = pd.to_datetime(product_sales['date'])
+product_sales['year_month'] = product_sales['date'].dt.to_period('M')
+
+# Create a pivot table of monthly sales by product
+monthly_product_sales = pd.pivot_table(
+    product_sales,
+    values='total_price',
+    index='product',
+    columns='year_month',
+    aggfunc='sum',
+    fill_value=0
+)
+
+# Calculate month-over-month percentage change
+mom_growth = monthly_product_sales.pct_change(axis=1) * 100
+
+# Replace infinity values (from divisions by zero) with NaN
+mom_growth = mom_growth.replace([np.inf, -np.inf], np.nan)
+
+print("Month-over-month growth rate for each product (%):")
+print(mom_growth.round(2))
+
+# Find products with highest average growth rate
+avg_growth = mom_growth.mean(axis=1).sort_values(ascending=False)
+print("\nProducts with highest average monthly growth rate:")
+print(avg_growth.head().round(2))
 
 # 5.4 Identify the top 3 selling products for each month
 # YOUR CODE HERE
