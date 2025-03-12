@@ -432,8 +432,66 @@ print("\nProducts with highest average monthly growth rate:")
 print(avg_growth.head().round(2))
 
 # 5.4 Identify the top 3 selling products for each month
-# YOUR CODE HERE
+# Make sure we have a clean DataFrame to work with
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Convert date to datetime if needed
+product_sales['date'] = pd.to_datetime(product_sales['date'])
+product_sales['year_month'] = product_sales['date'].dt.to_period('M')
+
+# Group by month and product, then sum the sales
+monthly_product_sales = product_sales.groupby(['year_month', 'product'])['total_price'].sum().reset_index()
+
+# Function to get top 3 products for each month
+def get_top_products(group):
+    return group.nlargest(3, 'total_price')
+
+# Apply the function to each month group
+top_products_by_month = monthly_product_sales.groupby('year_month').apply(get_top_products)
+
+# Reset index for cleaner display
+top_products_by_month = top_products_by_month.reset_index(drop=True)
+
+print("Top 3 selling products for each month:")
+for month, group in top_products_by_month.groupby('year_month'):
+    print(f"\nMonth: {month}")
+    for _, row in group.iterrows():
+        print(f"  {row['product']}: ${row['total_price']:.2f}")
 
 # 5.5 Create a DataFrame that shows the sales rank of each product within 
 # its category, for each region
-# YOUR CODE HERE
+# Make sure we have a clean DataFrame to work with
+if isinstance(product_sales.index, pd.MultiIndex):
+    product_sales = product_sales.reset_index()
+
+# Group by category, product, and region to get total sales
+sales_by_cat_prod_region = product_sales.groupby(['category', 'product', 'region'])['total_price'].sum().reset_index()
+
+# Function to rank products within each category-region group
+def rank_within_category_region(group):
+    group['rank'] = group['total_price'].rank(ascending=False, method='dense')
+    return group
+
+# Apply ranking within each category and region
+ranked_sales = sales_by_cat_prod_region.groupby(['category', 'region']).apply(rank_within_category_region)
+
+# Reset index for cleaner display
+ranked_sales = ranked_sales.reset_index(drop=True)
+
+# Sort for better visibility
+ranked_sales = ranked_sales.sort_values(['category', 'region', 'rank'])
+
+print("Sales rank of each product within its category, for each region:")
+print(ranked_sales)
+
+# Create a pivot table for easier analysis
+pivot_ranked = ranked_sales.pivot_table(
+    index=['category', 'product'],
+    columns='region',
+    values='rank',
+    fill_value=np.nan
+)
+
+print("\nPivot table of rankings:")
+print(pivot_ranked)
