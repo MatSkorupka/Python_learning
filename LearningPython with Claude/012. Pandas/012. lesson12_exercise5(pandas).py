@@ -160,6 +160,70 @@ plt.show()
 # Determine which segment contributes most to overall revenue
 # Find which products are most popular with VIP customers
 
+# Calculate average order value by customer segment
+segment_avg_order = sales_data.groupby('customer_segment')['total_amount'].mean().sort_values(ascending=False)
+
+print("Average Order Value by Customer Segment:")
+print(segment_avg_order.round(2))
+
+# Visualize average order value by segment
+plt.figure(figsize=(10, 6))
+plt.bar(segment_avg_order.index, segment_avg_order.values, color='skyblue')
+plt.title('Average Order Value by Customer Segment', fontsize=14)
+plt.xlabel('Customer Segment', fontsize=12)
+plt.ylabel('Average Order Value ($)', fontsize=12)
+plt.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# Determine which segment contributes most to overall revenue
+segment_total_revenue = sales_data.groupby('customer_segment')['total_amount'].sum().sort_values(ascending=False)
+segment_pct_revenue = (segment_total_revenue / segment_total_revenue.sum() * 100).round(2)
+
+print("\nRevenue Contribution by Customer Segment:")
+segment_revenue_analysis = pd.DataFrame({
+    'Total Revenue': segment_total_revenue.round(2),
+    'Percentage of Total': segment_pct_revenue.astype(str) + '%',
+    'Count of Orders': sales_data.groupby('customer_segment').size()
+})
+print(segment_revenue_analysis)
+
+# Visualize revenue contribution
+plt.figure(figsize=(10, 6))
+plt.pie(segment_pct_revenue, labels=segment_pct_revenue.index, autopct='%1.1f%%', 
+        startangle=90, colors=['#ff9999','#66b3ff','#99ff99','#ffcc99'])
+plt.title('Revenue Contribution by Customer Segment', fontsize=14)
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+plt.tight_layout()
+plt.show()
+
+# Find which products are most popular with VIP customers
+vip_product_counts = sales_data[sales_data['customer_segment'] == 'VIP'].groupby('product')['quantity'].sum().sort_values(ascending=False)
+
+print("\nTop Products Purchased by VIP Customers:")
+print(vip_product_counts.head(10))
+
+# Analyze VIP preferences by category
+vip_category_analysis = sales_data[sales_data['customer_segment'] == 'VIP'].groupby('category').agg({
+    'total_amount': 'sum',
+    'order_id': 'nunique',
+    'quantity': 'sum'
+}).sort_values('total_amount', ascending=False)
+
+print("\nVIP Customer Purchases by Category:")
+print(vip_category_analysis)
+
+# Visualize top products for VIP customers
+plt.figure(figsize=(12, 6))
+vip_product_counts.head(10).plot(kind='bar', color='goldenrod')
+plt.title('Top 10 Products Purchased by VIP Customers', fontsize=14)
+plt.xlabel('Product', fontsize=12)
+plt.ylabel('Total Quantity Purchased', fontsize=12)
+plt.xticks(rotation=45, ha='right')
+plt.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.show()
+
 # Task 3: Product and Category Analysis
 # Identify the top 3 products in each category by sales
 # Calculate the profit margin for each category (assume 40% of base_price is cost)
