@@ -209,6 +209,31 @@ Task 2: Data Cleaning
 6. Create a clean version of the dataset with all transformations applied
 """
 
+#1
+sales_df['date'] = pd.to_datetime(sales_df['date'])
+
+#2
+missing_values = sales_df.isna().sum()
+# No missing valuses so it is not necessery to fillup
+
+#3
+not_numeric_cols = sales_df.select_dtypes(include=['object']).columns
+for x in not_numeric_cols:
+    sales_df[x] = sales_df[x].str.upper().str.strip()
+
+#4
+sales_df['has_discount'] = (sales_df['discount_pct'] > 0).astype(int)
+
+
+#5
+sales_df.drop_duplicates(inplace = True)
+
+#6
+print(sales_df)
+sales_df.to_csv('data/sales_data_cleaned.csv', index=False)
+
+
+
 """
 Task 3: Data Transformation
 1. Extract year, month, and day from the date column into separate columns
@@ -218,6 +243,35 @@ Task 3: Data Transformation
 5. Create a 'price_range' column with bins for 'Low', 'Medium', 'High' based on final_price
 6. Calculate the discount amount in dollars and add as a new column
 """
+
+
+# #1
+# sales_df['year'] = sales_df['date'].dt.year
+# sales_df['month'] = sales_df['date'].dt.month
+# sales_df['day'] = sales_df['date'].dt.day
+
+# #2
+# sales_df['day_of_week'] = sales_df['date'].dt.day_name()
+
+# #3
+# sales_df['is_weekend'] = sales_df['date'].dt.dayofweek > 4
+
+
+# #4
+# sales_df[['category', 'product', 'region', 'store']] = sales_df[['category', 'product', 'region', 'store']].astype('category')
+
+# #5
+# final_price = sales_df['final_price']
+# final_price.describe()
+
+# #based on describe Over 75% = High, over 50% = Medium
+# sales_df['price_range'] = 'Low'
+# sales_df.loc[sales_df['final_price'] > 458, 'price_range'] = 'Medium'
+# sales_df.loc[sales_df['final_price'] > 681, 'price_range'] = 'High'
+
+# #6
+# sales_df['discount_amount'] = (sales_df['discount_pct'] / 100) * sales_df['base_price'] 
+
 
 ### Intermediate Tasks ###
 
