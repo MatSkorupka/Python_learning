@@ -245,32 +245,32 @@ Task 3: Data Transformation
 """
 
 
-# #1
-# sales_df['year'] = sales_df['date'].dt.year
-# sales_df['month'] = sales_df['date'].dt.month
-# sales_df['day'] = sales_df['date'].dt.day
+#1
+sales_df['year'] = sales_df['date'].dt.year
+sales_df['month'] = sales_df['date'].dt.month
+sales_df['day'] = sales_df['date'].dt.day
 
-# #2
-# sales_df['day_of_week'] = sales_df['date'].dt.day_name()
+#2
+sales_df['day_of_week'] = sales_df['date'].dt.day_name()
 
-# #3
-# sales_df['is_weekend'] = sales_df['date'].dt.dayofweek > 4
+#3
+sales_df['is_weekend'] = sales_df['date'].dt.dayofweek > 4
 
 
-# #4
-# sales_df[['category', 'product', 'region', 'store']] = sales_df[['category', 'product', 'region', 'store']].astype('category')
+#4
+sales_df[['category', 'product', 'region', 'store']] = sales_df[['category', 'product', 'region', 'store']].astype('category')
 
-# #5
-# final_price = sales_df['final_price']
-# final_price.describe()
+#5
+final_price = sales_df['final_price']
+final_price.describe()
 
-# #based on describe Over 75% = High, over 50% = Medium
-# sales_df['price_range'] = 'Low'
-# sales_df.loc[sales_df['final_price'] > 458, 'price_range'] = 'Medium'
-# sales_df.loc[sales_df['final_price'] > 681, 'price_range'] = 'High'
+#based on describe Over 75% = High, over 50% = Medium
+sales_df['price_range'] = 'Low'
+sales_df.loc[sales_df['final_price'] > 458, 'price_range'] = 'Medium'
+sales_df.loc[sales_df['final_price'] > 681, 'price_range'] = 'High'
 
-# #6
-# sales_df['discount_amount'] = (sales_df['discount_pct'] / 100) * sales_df['base_price'] 
+#6
+sales_df['discount_amount'] = (sales_df['discount_pct'] / 100) * sales_df['base_price'] 
 
 
 ### Intermediate Tasks ###
