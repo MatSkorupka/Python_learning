@@ -283,7 +283,32 @@ Task 4: Aggregation and Grouping
 4. Group data by region and store, calculating total sales for each combination
 5. Find the average transaction value by customer type
 6. Create a cross-tabulation (pivot table) of categories vs. regions showing total sales
+"""
 
+#1
+product_aggs = sales_df.groupby('category').agg({
+    'total_amount': ['sum', 'mean'],         # Total sales, average order value
+    'transaction_id': 'count'                # Number of transactions by category
+})
+
+#2
+top_5 = sales_df.groupby('product')['quantity'].sum().sort_values(ascending=False).head(5)
+
+#3
+avg_discount = sales_df.groupby('category')['discount_pct'].mean().sort_values(ascending=False)
+
+#4
+region_store_amount = sales_df.groupby(['region', 'store'])['total_amount'].sum().sort_values(ascending=False)
+
+#5
+avg_per_customer = sales_df.groupby('customer_type')['total_amount'].mean().sort_values(ascending=False)
+
+#6
+pivot_table = pd.pivot_table(sales_df, values='total_amount', index='category', columns='region', aggfunc='sum')
+
+
+
+"""
 Task 5: Time Series Analysis
 1. Resample the data to get daily, weekly, and monthly total sales
 2. Calculate the month-over-month percentage change in sales
