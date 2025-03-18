@@ -15,6 +15,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import random
 import os
+import datetime as dt
 
 # Set seed for reproducibility
 np.random.seed(42)
@@ -306,6 +307,45 @@ avg_per_customer = sales_df.groupby('customer_type')['total_amount'].mean().sort
 #6
 pivot_table = pd.pivot_table(sales_df, values='total_amount', index='category', columns='region', aggfunc='sum')
 
+
+
+# Using the sales_df DataFrame:
+
+# 1. Create a new column 'month_year' that combines the month and year (format: 'YYYY-MM')
+sales_df['month_year'] = sales_df['date'].dt.strftime('%Y-%m')
+print(sales_df)
+
+# 2. For each month_year and customer_type combination, calculate:
+#    - Total revenue
+#    - Average order value
+#    - Number of transactions
+#    - Total quantity sold
+#    - Average discount percentage
+
+sales_agg2 = sales_df.groupby(['month_year', 'customer_type']).agg({
+    'total_amount' : ['sum', 'mean'],
+    'transaction_id' : 'count',
+    'quantity' : 'sum',
+    'discount_pct' : 'mean'
+})
+
+# 3. Identify the top-performing customer segment for each month (by total revenue)
+# Hint: This requires groupby, then another operation to find the maximum
+
+monthly_segment_sales = sales_df.groupby(['month_year', 'customer_type'])['total_amount'].sum().reset_index()
+
+top_segment_by_month = monthly_segment_sales.loc[
+    monthly_segment_sales.groupby('month_year')['total_amount'].idxmax()
+]
+
+print(top_segment_by_month[['month_year', 'customer_type', 'total_amount']])
+
+
+# 4. Calculate the percentage contribution of each customer segment to the total revenue for each month
+# Hint: You'll need to calculate monthly totals, then join or merge back
+
+
+# 5. Find months where VIP customers contributed more than 30% of the total revenue
 
 
 """
