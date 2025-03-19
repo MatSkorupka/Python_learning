@@ -344,8 +344,82 @@ print(top_segment_by_month[['month_year', 'customer_type', 'total_amount']])
 # 4. Calculate the percentage contribution of each customer segment to the total revenue for each month
 # Hint: You'll need to calculate monthly totals, then join or merge back
 
+# Get total sales by month
+monthly_totals = sales_df.groupby('month_year')['total_amount'].sum().reset_index()
+monthly_totals.rename(columns={'total_amount': 'month_total'}, inplace=True)
+
+# Merge with segment sales
+segment_contribution = monthly_segment_sales.merge(monthly_totals, on='month_year')
+
+# Calculate percentage
+segment_contribution['contribution_pct'] = (segment_contribution['total_amount'] / 
+                                           segment_contribution['month_total'] * 100)
+
+print(segment_contribution[['month_year', 'customer_type', 'total_amount', 
+                            'month_total', 'contribution_pct']])
 
 # 5. Find months where VIP customers contributed more than 30% of the total revenue
+vip_months = segment_contribution[
+    (segment_contribution['customer_type'] == 'VIP') & 
+    (segment_contribution['contribution_pct'] > 30)
+]
+
+print("Months where VIP customers contributed more than 30% of revenue:")
+print(vip_months[['month_year', 'contribution_pct']])
+
+
+# Assuming you have sales_df loaded with date as datetime
+
+# 1. First, create a new DataFrame that contains the daily sales by product
+# Hint: Use groupby with date and product, then sum of quantity and total_amount
+daily_sales = sales_df.groupby(['date', 'product'])[['quantity', 'total_amount']].sum()
+daily_sales_reset = daily_sales.reset_index()
+print(daily_sales)
+
+# 2. Calculate the cumulative sum of quantity sold for each product over time
+# This will show the running total of units sold for each product
+
+# Sort data by date
+daily_sales_reset = daily_sales_reset.sort_values('date')
+
+# Calculate cumulative sum of quantity for each product over time
+product_cumulative_sales = daily_sales_reset.groupby('product')['quantity'].cumsum()
+
+# Add this as a new column to your DataFrame
+daily_sales_reset['cumulative_quantity'] = product_cumulative_sales
+print(daily_sales_reset)
+
+# 3. Calculate a 7-day rolling average of sales for each product
+# This will smooth out daily fluctuations and show trends
+
+daily_sales_reset = daily_sales_reset.sort_values(['product', 'date'])
+
+# Set up a MultiIndex
+daily_sales_indexed = daily_sales_reset.set_index(['product', 'date'])
+
+# Calculate the 7-day rolling average for each product
+seven_day_rolling = daily_sales_indexed.groupby(level='product')['total_amount'].rolling(window=7).mean()
+
+# First convert to DataFrame
+seven_day_rolling_df = seven_day_rolling.to_frame(name='rolling_7day_avg')
+
+# Rename the column
+seven_day_rolling_df = seven_day_rolling_df.rename(columns={'total_amount': 'rolling_7day_avg'})
+
+print(seven_day_rolling_df.head(10))
+
+# 4. For each product, calculate:
+#    - The percentage change in sales compared to the previous day
+#    - The maximum single-day sales
+#    - The day with the highest sales
+
+
+# 5. Create a 'product_performance' metric that ranks products by:
+#    - Total revenue (50% weight)
+#    - Sales growth (30% weight) - using the slope of a linear fit to daily sales
+#    - Consistency (20% weight) - inverse of the coefficient of variation
+# Hint: You may need to use apply() with a custom fu
+
 
 
 """
