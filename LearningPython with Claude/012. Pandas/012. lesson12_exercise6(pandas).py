@@ -413,12 +413,98 @@ print(seven_day_rolling_df.head(10))
 #    - The maximum single-day sales
 #    - The day with the highest sales
 
+# Reset index if needed to work with a regular DataFrame
+if isinstance(daily_sales_indexed, pd.DataFrame) and daily_sales_indexed.index.nlevels > 1:
+    analysis_df = daily_sales_indexed.reset_index()
+else:
+    analysis_df = daily_sales_reset.copy()
+
+# Sort by product and date
+analysis_df = analysis_df.sort_values(['product', 'date'])
+
+# Calculate percentage change compared to previous day
+analysis_df['pct_change'] = analysis_df.groupby('product')['total_amount'].pct_change() * 100
+
+# Find maximum sales and best day for each product
+product_stats = analysis_df.groupby('product').agg(
+    max_daily_sales=('total_amount', 'max'),
+    total_revenue=('total_amount', 'sum')
+)
+
+# Find the day with highest sales for each product
+best_days = analysis_df.loc[analysis_df.groupby('product')['total_amount'].idxmax()]
+best_days = best_days[['product', 'date', 'total_amount']]
+best_days = best_days.rename(columns={'date': 'best_day', 'total_amount': 'best_day_sales'})
+
+# Merge the stats
+product_stats = product_stats.merge(best_days[['product', 'best_day']], on='product')
+
+print("Product statistics:")
+print(product_stats)
 
 # 5. Create a 'product_performance' metric that ranks products by:
 #    - Total revenue (50% weight)
 #    - Sales growth (30% weight) - using the slope of a linear fit to daily sales
 #    - Consistency (20% weight) - inverse of the coefficient of variation
 # Hint: You may need to use apply() with a custom fu
+
+
+# First, calculate consistency (coefficient of variation)
+product_cv = analysis_df.groupby('product')['total_amount'].agg(
+    lambda x: x.std() / x.mean() if x.mean() > 0 else float('inf')
+)
+product_cv = product_cv.reset_index()
+product_cv = product_cv.rename(columns={'total_amount': 'cv'})
+product_stats = product_stats.merge(product_cv, on='product')
+product_stats['consistency'] = 1 / product_stats['cv']  # Inverse of CV so higher is better
+
+# Calculate growth trend using pandas
+def calculate_growth_trend(group):
+    # Add a numeric x-axis
+    group = group.copy()
+    group['x'] = range(len(group))
+    
+    # Calculate covariance and variance for the slope
+    if len(group) <= 1:
+        return 0
+    
+    cov = group['x'].cov(group['total_amount'])
+    var = group['x'].var()
+    
+    # Return slope (0 if variance is 0 to avoid division by zero)
+    return cov / var if var > 0 else 0
+
+# Apply the growth trend calculation to each product group
+growth_trends = analysis_df.groupby('product').apply(calculate_growth_trend)
+growth_trends = growth_trends.reset_index()
+growth_trends = growth_trends.rename(columns={0: 'growth_slope'})
+product_stats = product_stats.merge(growth_trends, on='product')
+
+# Normalize metrics to 0-1 scale
+product_stats['norm_revenue'] = product_stats['total_revenue'] / product_stats['total_revenue'].max() if product_stats['total_revenue'].max() > 0 else 0
+
+# For growth, handle case where all products have same growth
+if product_stats['growth_slope'].max() != product_stats['growth_slope'].min():
+    product_stats['norm_growth'] = (product_stats['growth_slope'] - product_stats['growth_slope'].min()) / (product_stats['growth_slope'].max() - product_stats['growth_slope'].min())
+else:
+    product_stats['norm_growth'] = 1  # All products have same growth
+
+# For consistency, handle case where all products have same consistency
+product_stats['norm_consistency'] = product_stats['consistency'] / product_stats['consistency'].max() if product_stats['consistency'].max() > 0 else 0
+
+# Calculate weighted score
+product_stats['performance_score'] = (
+    0.5 * product_stats['norm_revenue'] + 
+    0.3 * product_stats['norm_growth'] + 
+    0.2 * product_stats['norm_consistency']
+)
+
+# Rank products
+product_stats['rank'] = product_stats['performance_score'].rank(ascending=False)
+product_stats = product_stats.sort_values('performance_score', ascending=False)
+
+print("\nProduct Performance Ranking:")
+print(product_stats[['product', 'performance_score', 'rank', 'norm_revenue', 'norm_growth', 'norm_consistency']])
 
 
 
