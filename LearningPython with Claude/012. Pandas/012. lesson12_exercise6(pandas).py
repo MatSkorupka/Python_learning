@@ -516,7 +516,43 @@ Task 5: Time Series Analysis
 4. Find the day of week with the highest average sales
 5. Group data by month and calculate year-over-year growth for months that appear in both years
 6. Identify seasonal patterns by analyzing monthly sales data
+"""
+#1
 
+sales_with_date_index = sales_df.set_index('date')
+
+daily_sales = sales_with_date_index.resample('D')['total_amount'].sum().reset_index()
+print(daily_sales.head())
+
+weekly_sales = sales_with_date_index.resample('W-MON')['total_amount'].sum().reset_index()
+print(weekly_sales.head())
+
+monthly_sales = sales_with_date_index.resample('M')['total_amount'].sum().reset_index()
+print(monthly_sales.head())
+
+
+#2
+# monthly_sales['mom_pct_change'] = monthly_sales['total_amount'].pct_change() * 100
+# print("\nMonth-over-Month Percentage Change:")
+# print(monthly_sales[['date', 'total_amount', 'mom_pct_change']])
+
+
+# #3
+# sales_with_date_index = sales_df.set_index('date')  # Make sure date is the index
+# moving_avg_7d = sales_with_date_index['total_amount'].rolling(window=7).mean()
+# moving_avg_df = moving_avg_7d.reset_index()
+# moving_avg_df.columns = ['date', 'moving_avg_7d']
+
+# print("\n7-Day Moving Average of Sales (first 5 rows):")
+# print(moving_avg_df.head())
+
+# combined_df = pd.merge(daily_sales, moving_avg_df, on='date', how='left')
+# print("\nDaily Sales with 7-Day Moving Average (first 5 rows):")
+# print(combined_df.head())
+
+
+
+"""
 Task 6: Data Joins and Merges
 1. Merge the sales data with product data to get cost information
 2. Calculate the profit margin for each transaction (total_amount - cost * quantity)
