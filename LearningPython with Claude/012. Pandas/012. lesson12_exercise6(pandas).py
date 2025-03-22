@@ -532,9 +532,9 @@ print(monthly_sales.head())
 
 
 #2
-# monthly_sales['mom_pct_change'] = monthly_sales['total_amount'].pct_change() * 100
-# print("\nMonth-over-Month Percentage Change:")
-# print(monthly_sales[['date', 'total_amount', 'mom_pct_change']])
+monthly_sales['mom_pct_change'] = monthly_sales['total_amount'].pct_change() * 100
+print("\nMonth-over-Month Percentage Change:")
+print(monthly_sales[['date', 'total_amount', 'mom_pct_change']])
 
 
 # #3
