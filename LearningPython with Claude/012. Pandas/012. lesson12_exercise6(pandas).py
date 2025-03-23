@@ -537,18 +537,18 @@ print("\nMonth-over-Month Percentage Change:")
 print(monthly_sales[['date', 'total_amount', 'mom_pct_change']])
 
 
-# #3
-# sales_with_date_index = sales_df.set_index('date')  # Make sure date is the index
-# moving_avg_7d = sales_with_date_index['total_amount'].rolling(window=7).mean()
-# moving_avg_df = moving_avg_7d.reset_index()
-# moving_avg_df.columns = ['date', 'moving_avg_7d']
+#3
+sales_with_date_index = sales_df.set_index('date')  # Make sure date is the index
+moving_avg_7d = sales_with_date_index['total_amount'].rolling(window=7).mean()
+moving_avg_df = moving_avg_7d.reset_index()
+moving_avg_df.columns = ['date', 'moving_avg_7d']
 
-# print("\n7-Day Moving Average of Sales (first 5 rows):")
-# print(moving_avg_df.head())
+print("\n7-Day Moving Average of Sales (first 5 rows):")
+print(moving_avg_df.head())
 
-# combined_df = pd.merge(daily_sales, moving_avg_df, on='date', how='left')
-# print("\nDaily Sales with 7-Day Moving Average (first 5 rows):")
-# print(combined_df.head())
+combined_df = pd.merge(daily_sales, moving_avg_df, on='date', how='left')
+print("\nDaily Sales with 7-Day Moving Average (first 5 rows):")
+print(combined_df.head())
 
 
 
