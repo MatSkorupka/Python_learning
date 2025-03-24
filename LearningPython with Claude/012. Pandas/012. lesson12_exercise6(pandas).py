@@ -560,9 +560,37 @@ Task 6: Data Joins and Merges
 4. Create a complete dataset that includes all information from sales, products, and customers
 5. Identify any transactions where the product is out of stock (from product data)
 6. Calculate the average age of customers by product category
+"""
+
+#1
+sales_df['date'] = pd.to_datetime(sales_df['date'])
+product_df['date_added'] = pd.to_datetime(product_df['date_added'])
+
+print("Sales DataFrame product column name:", sales_df['product'].name)
+print("Product DataFrame product column name:", product_df['product_name'].name)
+
+sales_with_cost = sales_df.merge(
+    product_df[['product_name', 'cost']],
+    left_on='product',
+    right_on='product_name',
+    how='left'
+)
+
+print("\nMerged DataFrame (first 5 rows):")
+print(sales_with_cost.head())
+
+missing_cost = sales_with_cost[sales_with_cost['cost'].isna()]
+if len(missing_cost) > 0:
+    print(f"\nWarning: {len(missing_cost)} transactions have missing cost information.")
+    print("Unique products with missing cost:", missing_cost['product'].unique())
+
+
+
+
+
 
 ### Advanced Tasks ###
-
+"""
 Task 7: Performance Optimization
 1. Measure the memory usage of the sales DataFrame
 2. Convert appropriate columns to categorical data type and measure the reduction in memory usage
