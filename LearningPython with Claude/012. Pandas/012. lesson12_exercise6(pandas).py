@@ -585,7 +585,28 @@ if len(missing_cost) > 0:
     print("Unique products with missing cost:", missing_cost['product'].unique())
 
 
+# 2. Calculate the profit margin for each transaction (total_amount - cost * quantity)
 
+# Calculate profit
+sales_with_cost['profit'] = sales_with_cost['total_amount'] - (sales_with_cost['cost'] * sales_with_cost['quantity'])
+
+# Calculate profit margin percentage
+sales_with_cost['profit_margin_pct'] = (sales_with_cost['profit'] / sales_with_cost['total_amount']) * 100
+
+# Display results
+print("\nSales with Profit Information (first 5 rows):")
+print(sales_with_cost[['transaction_id', 'product', 'total_amount', 'cost', 'quantity', 'profit', 'profit_margin_pct']].head())
+
+# Aggregate profit by product
+product_profit = sales_with_cost.groupby('product').agg({
+    'total_amount': 'sum',
+    'profit': 'sum',
+    'profit_margin_pct': 'mean',
+    'transaction_id': 'count'
+}).rename(columns={'transaction_id': 'num_transactions'}).sort_values('profit', ascending=False)
+
+print("\nProfit by Product (top 10):")
+print(product_profit.head(10))
 
 
 
