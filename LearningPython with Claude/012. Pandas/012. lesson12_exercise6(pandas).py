@@ -608,7 +608,67 @@ product_profit = sales_with_cost.groupby('product').agg({
 print("\nProfit by Product (top 10):")
 print(product_profit.head(10))
 
+#3
+# First, let's load our customer dataset if it's not already loaded
+# customer_df = pd.read_csv('data/customer_data.csv')
 
+# Ensure join_date is in datetime format
+customer_df['join_date'] = pd.to_datetime(customer_df['join_date'])
+
+# Check the key columns we'll join on
+print("Sales DataFrame customer type column:", sales_df['customer_type'].name)
+print("Customer DataFrame customer type column:", customer_df['customer_type'].name)
+
+# Join sales data with customer data
+# We'll join the sales data that already has product costs
+sales_with_customer = sales_with_cost.merge(
+    customer_df,
+    on='customer_type',  # Join on customer_type which exists in both DataFrames
+    how='left'
+)
+
+# Check to make sure the merge worked
+print("\nSales with Customer Information (first 5 rows):")
+print(sales_with_customer.head())
+
+# Check if any customer types didn't match
+missing_customer = sales_with_customer[sales_with_customer['customer_id'].isna()]
+if len(missing_customer) > 0:
+    print(f"\nWarning: {len(missing_customer)} transactions have missing customer information.")
+    print("Unique customer types with missing info:", missing_customer['customer_type'].unique())
+
+# Create a summary of sales by customer type
+customer_summary = sales_with_customer.groupby('customer_type').agg({
+    'total_amount': 'sum',
+    'profit': 'sum',
+    'age': 'mean',
+    'transaction_id': 'count'
+}).rename(columns={'transaction_id': 'num_transactions'})
+
+print("\nSales Summary by Customer Type:")
+print(customer_summary)
+
+# Analyze average order value by customer type
+customer_summary['avg_order_value'] = customer_summary['total_amount'] / customer_summary['num_transactions']
+print("\nAverage Order Value by Customer Type:")
+print(customer_summary[['avg_order_value']])
+
+# Optional: Analyze sales by customer demographics (e.g., age groups)
+if 'age' in sales_with_customer.columns:
+    # Create age groups
+    bins = [0, 25, 35, 50, 65, 100]
+    labels = ['18-25', '26-35', '36-50', '51-65', '65+']
+    sales_with_customer['age_group'] = pd.cut(sales_with_customer['age'], bins=bins, labels=labels)
+    
+    # Analyze sales by age group
+    age_group_summary = sales_with_customer.groupby('age_group').agg({
+        'total_amount': 'sum',
+        'profit': 'sum',
+        'transaction_id': 'count'
+    }).rename(columns={'transaction_id': 'num_transactions'})
+    
+    print("\nSales by Age Group:")
+    print(age_group_summary)
 
 ### Advanced Tasks ###
 """
