@@ -1,0 +1,31 @@
+# Core data processing libraries
+pandas==2.0.3
+numpy==1.24.3
+
+# Data visualization
+matplotlib==3.7.2
+seaborn==0.12.2
+plotly==5.15.0
+
+# Financial libraries
+yfinance==0.2.28  # Yahoo Finance API wrapper
+alpha_vantage==2.3.1  # Alpha Vantage API
+pandas-datareader==0.10.0  # Data reader for various sources
+pandas-ta==0.3.14b0  # Technical analysis indicators
+# ta-lib  # Uncomment if you can install TA-Lib (requires C library)
+
+# API and web interaction
+requests==2.31.0
+beautifulsoup4==4.12.2  # For web scraping (optional)
+
+# Jupyter environment
+jupyter==1.0.0
+notebook==6.5.4
+ipywidgets==8.0.6
+
+# Utilities
+python-dotenv==1.0.0  # For managing environment variables and API keys
+tqdm==4.65.0  # Progress bars
+
+# Data export
+openpyxl==3.1.2  # Excel support
