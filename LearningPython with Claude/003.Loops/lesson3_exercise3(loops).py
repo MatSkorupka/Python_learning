@@ -10,6 +10,11 @@ sales_data = {
     }
 }
 
+products = sales_data['products']
+categories = sales_data['categories']
+prices = sales_data['prices']
+stock = sales_data['stock']
+
 # Exercise 1: Discounted Prices
 # For each product, calculate and print:
 # - Original price
@@ -26,7 +31,6 @@ for product, category, price in zip(products, categories, prices):
     print(f'Price for {product} is {price}')
     print(f'Discount for {product} is {discount}')
     print(f'Final price for {product} is {final_price}')
-
 
 # Exercise 2: Stock Value Analysis
 # For each product, calculate and print:
