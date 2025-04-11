@@ -4,11 +4,8 @@ import yfinance as yf
 import pandas as pd
 import sys
 
-# tickers = yf.Tickers('AMZN MSFT GOOGL IBM ORCL CRM AVGO SAP BABA TCEHY BIDU DOCN NET FSLY AKAM RXT SNOW WDAY MDB TWLO')
-
 # Choosing only cloud providers
 ticker_string = 'AMZN MSFT GOOGL IBM ORCL CRM AVGO SAP BABA TCEHY BIDU DOCN NET FSLY AKAM RXT SNOW WDAY MDB TWLO'
-
 
 try:
     print(f"Attempting to download data for {len(ticker_string.split())} tickers...")
