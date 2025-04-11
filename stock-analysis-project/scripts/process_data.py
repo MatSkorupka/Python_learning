@@ -1,118 +1,142 @@
+# process_data.py
 import pandas as pd
+import numpy as np
 import os
 import sys
+from config import CLOUD_PROVIDERS, TICKERS, RAW_DATA_PATH, PROCESSED_DATA_PATH
 
+def ensure_directory_exists(directory):
+    """Create directory if it doesn't exist."""
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"Created directory: {directory}")
 
-# Read the CSV file
-try:
-    df = pd.read_csv('stock-analysis-project/data/raw/all_cloud_providers.csv')
-    print('Data successfully loaded')
-except Exception as e:
-    print(f"Error saving data to CSV: {e}")
-    sys.exit(1)
-
-# Ensure the processed directory exists
-os.makedirs('stock-analysis-project/data/processed', exist_ok=True)
-
-# Print the first few rows to understand the structure
-print("First few rows of the original data:")
-print(df.head())
-print("\nColumn names:", df.columns.tolist())
-
-# Find the date column
-# First, check if there's a column named 'Date'
-if 'Date' in df.columns:
-    date_column = 'Date'
-# Otherwise, try the first column which is often a date
-elif df.columns[0].lower() in ['date', 'unnamed: 0']:
-    date_column = df.columns[0]
-else:
-    # Look for a column that has date-like values
-    date_column = None
-    for col in df.columns:
-        try:
-            # Check a few values to see if they're dates
-            sample_values = df[col].dropna().head(5)
-            if sample_values.empty:
-                continue
-            
-            # Try to convert to datetime
-            dates = pd.to_datetime(sample_values, errors='coerce')
-            if not dates.isna().all():
-                date_column = col
-                print(f"Found date column: {col}")
-                break
-        except:
-            continue
-
-if date_column:
-    print(f"Using {date_column} as the date source")
-    
-    # Create a new DataFrame with the correct structure
-    cleaned_df = pd.DataFrame(columns=['Date', 'Company', 'Close', 'High', 'Low', 'Open', 'Volume'])
-    
-    # Convert date column to datetime, handling errors
-    df['proper_date'] = pd.to_datetime(df[date_column], errors='coerce')
-    
-    # Remove rows with invalid dates
-    valid_dates_df = df[~df['proper_date'].isna()].copy()
-    print(f"Found {len(valid_dates_df)} rows with valid dates")
-    
-    # Define company tickers
-    tickers = ['AMZN', 'MSFT', 'GOOGL', 'IBM', 'ORCL', 'CRM', 'AVGO', 'SAP', 
-               'BABA', 'TCEHY', 'BIDU', 'DOCN', 'NET', 'FSLY', 'AKAM', 
-               'RXT', 'SNOW', 'WDAY', 'MDB', 'TWLO']
-    
-    # List to store rows that will be added to the cleaned_df
-    rows_to_add = []
-    
-    # Process each row with a valid date
-    for idx, row in valid_dates_df.iterrows():
-        date = row['proper_date']
+def process_raw_data():
+    """Process and clean the raw stock data."""
+    try:
+        # Read the raw CSV file without header
+        print(f"Reading raw data from {RAW_DATA_PATH}")
+        raw_df = pd.read_csv(RAW_DATA_PATH, header=None)
         
-        # Find columns for each company's financial data
-        for i, ticker in enumerate(tickers):
-            company_data = {'Date': date, 'Company': ticker}
-            has_data = False
-            
-            # Look for financial data columns for this company
-            for metric in ['Close', 'High', 'Low', 'Open', 'Volume']:
-                # Try both naming patterns: "Close" and "Close.1", "Close.2", etc.
-                col_name = f"{metric}" if i == 0 else f"{metric}.{i}"
+        print(f"Raw data shape: {raw_df.shape}")
+        
+        # First row contains column headers
+        headers = raw_df.iloc[0].tolist()
+        
+        # Second row contains ticker symbols
+        tickers_row = raw_df.iloc[1].tolist()
+        
+        # Create a mapping of column indices to (metric, ticker) pairs
+        column_mapping = {}
+        for col_idx, header in enumerate(headers):
+            if col_idx == 0:  # Skip the first column which contains "Price"
+                continue
                 
-                if col_name in df.columns and pd.notna(row[col_name]):
-                    value = row[col_name]
-                    # Skip if the value is a string that matches a ticker
-                    if not isinstance(value, str) or value not in tickers:
-                        # Convert to numeric if possible
-                        try:
-                            value = pd.to_numeric(value)
-                        except:
-                            pass
-                        
-                        company_data[metric] = value
-                        has_data = True
+            ticker = tickers_row[col_idx]
+            if ticker in TICKERS:  # Only include tickers we're interested in
+                column_mapping[col_idx] = (header, ticker)
+        
+        # Create a list to hold the processed data
+        processed_data = []
+        
+        # Process each data row starting from row 4 (index 3)
+        for row_idx in range(3, len(raw_df)):
+            row = raw_df.iloc[row_idx]
             
-            # Only add rows that have at least some financial data
-            if has_data:
-                rows_to_add.append(company_data)
-    
-    # Use concat 
-    if rows_to_add:
-        cleaned_df = pd.concat([cleaned_df, pd.DataFrame(rows_to_add)], ignore_index=True)
-    
-    # Add an ID column
-    cleaned_df.insert(0, 'ID', range(len(cleaned_df)))
-    
-    # Sort by date and company
-    cleaned_df = cleaned_df.sort_values(['Date', 'Company']).reset_index(drop=True)
-    
-    # Save to CSV
-    output_path = 'stock-analysis-project/data/processed/stock_data_with_real_dates.csv'
-    cleaned_df.to_csv(output_path, index=False)
-    print(f"\nData with real dates saved to {output_path}")
-    print(f"Shape: {cleaned_df.shape}")
-    print("\nFirst few rows:")
-    print(cleaned_df.head())
-else:
-    print("Could not find a suitable date column in the data.")
+            # Get the date from the first column
+            date_str = row[0]
+            if not isinstance(date_str, str) or not date_str:
+                continue  # Skip rows without a date
+                
+            try:
+                # Convert to datetime
+                date = pd.to_datetime(date_str)
+                
+                # Create a dict to group data by ticker
+                ticker_data = {ticker: {} for ticker in TICKERS}
+                
+                # Extract data for each column
+                for col_idx, (metric, ticker) in column_mapping.items():
+                    if ticker in ticker_data:
+                        value = row[col_idx]
+                        if pd.notna(value) and value != "":
+                            # Try to convert to float
+                            try:
+                                ticker_data[ticker][metric] = float(value)
+                            except:
+                                pass  # Skip if conversion fails
+                
+                # Create a record for each ticker with data
+                for ticker, metrics in ticker_data.items():
+                    # Skip tickers with no data for this date
+                    if not metrics:
+                        continue
+                        
+                    # Get company and service names
+                    company_info = CLOUD_PROVIDERS.get(ticker, {'company': ticker, 'service': ticker})
+                    
+                    # Create the basic record
+                    record = {
+                        'Date': date,
+                        'Company': ticker,
+                        'CompanyName': company_info['company'],
+                        'ServiceName': company_info['service']
+                    }
+                    
+                    # Add each metric
+                    for metric, value in metrics.items():
+                        record[metric] = value
+                    
+                    # Add to the processed data list
+                    processed_data.append(record)
+                    
+            except Exception as e:
+                print(f"Error processing row {row_idx}: {e}")
+                continue
+        
+        # Create DataFrame from processed data
+        result_df = pd.DataFrame(processed_data)
+        
+        # Check if we have any data
+        if result_df.empty:
+            print("ERROR: No data was extracted. Check the file format.")
+            return None
+        
+        # Add ID column
+        result_df.reset_index(inplace=True)
+        result_df.rename(columns={'index': 'ID'}, inplace=True)
+        
+        # Sort by date and company
+        result_df = result_df.sort_values(['Date', 'Company']).reset_index(drop=True)
+        
+        # Print summary
+        print("\nProcessed data summary:")
+        print(f"Date range: {result_df['Date'].min()} to {result_df['Date'].max()}")
+        print(f"Number of companies: {result_df['Company'].nunique()}")
+        print(f"Total records: {len(result_df)}")
+        
+        # Save to CSV
+        result_df.to_csv(PROCESSED_DATA_PATH, index=False)
+        print(f"\nProcessed data saved to {PROCESSED_DATA_PATH}")
+        print("\nFirst few rows of processed data:")
+        print(result_df.head())
+        
+        return result_df
+        
+    except Exception as e:
+        print(f"Error processing data: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+def main():
+    processed_data = process_raw_data()
+    if processed_data is not None:
+        print("Data processing completed successfully!")
+        return processed_data
+    else:
+        print("Data processing failed.")
+        return None
+
+if __name__ == "__main__":
+    main()

@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 from datetime import datetime
+from config import CLOUD_PROVIDERS, TICKERS, PROCESSED_DATA_PATH
 
 def ensure_directory_exists(directory):
     """Create directory if it doesn't exist."""
@@ -22,6 +23,12 @@ def calculate_technical_indicators(df):
     for company, company_data in grouped:
         # Sort by date to ensure correct calculations
         company_data = company_data.sort_values('Date')
+        
+        # Add company name and service name if not already in data
+        if 'CompanyName' not in company_data.columns:
+            company_info = CLOUD_PROVIDERS.get(company, {'company': company, 'service': company})
+            company_data['CompanyName'] = company_info['company']
+            company_data['ServiceName'] = company_info['service']
         
         # Calculate moving averages
         company_data['SMA_20'] = company_data['Close'].rolling(window=20).mean()
@@ -74,6 +81,10 @@ def calculate_performance_metrics(df):
         # Sort by date
         company_data = company_data.sort_values('Date')
         
+        # Get company and service names
+        company_name = company_data['CompanyName'].iloc[0] if 'CompanyName' in company_data else company
+        service_name = company_data['ServiceName'].iloc[0] if 'ServiceName' in company_data else company
+        
         # Calculate metrics only if we have enough data
         if len(company_data) > 20:
             # Get the most recent closing price
@@ -107,6 +118,8 @@ def calculate_performance_metrics(df):
                 
                 # Store the results
                 performance[company] = {
+                    'company_name': company_name,
+                    'service_name': service_name,
                     'latest_close': latest_close,
                     'month_return': month_return,
                     'three_month_return': three_month_return,
@@ -116,8 +129,12 @@ def calculate_performance_metrics(df):
                     'data_points': len(company_data)
                 }
             except Exception as e:
-                print(f"Error calculating performance for {company}: {e}")
-                performance[company] = {'error': str(e)}
+                print(f"Error calculating performance for {service_name}: {e}")
+                performance[company] = {
+                    'company_name': company_name,
+                    'service_name': service_name,
+                    'error': str(e)
+                }
     
     # Convert to DataFrame
     performance_df = pd.DataFrame.from_dict(performance, orient='index')
@@ -131,7 +148,17 @@ def analyze_correlations(df):
     # Calculate correlation matrix
     correlation_matrix = pivot_df.corr()
     
-    return correlation_matrix
+    # Create a version with service names for display
+    service_name_map = {}
+    for ticker in correlation_matrix.columns:
+        info = CLOUD_PROVIDERS.get(ticker, {'company': ticker, 'service': ticker})
+        service_name_map[ticker] = info['service']
+    
+    display_corr = correlation_matrix.copy()
+    display_corr.columns = [service_name_map.get(col, col) for col in display_corr.columns]
+    display_corr.index = [service_name_map.get(idx, idx) for idx in display_corr.index]
+    
+    return correlation_matrix, display_corr
 
 def identify_trends(df):
     """Identify trends for each company based on moving averages."""
@@ -149,18 +176,27 @@ def identify_trends(df):
     # Count trends by company
     trend_counts = trend_df.groupby(['Company', 'Trend']).size().unstack(fill_value=0)
     
+    # Add company name and service name columns
+    trend_counts_with_names = trend_counts.reset_index()
+    trend_counts_with_names['CompanyName'] = trend_counts_with_names['Company'].apply(
+        lambda x: CLOUD_PROVIDERS.get(x, {'company': x})['company']
+    )
+    trend_counts_with_names['ServiceName'] = trend_counts_with_names['Company'].apply(
+        lambda x: CLOUD_PROVIDERS.get(x, {'service': x})['service']
+    )
+    trend_counts_with_names = trend_counts_with_names.set_index('Company')
+    
     # Calculate the percentage of each trend
     for trend in trend_counts.columns:
-        trend_counts[f'{trend}_pct'] = (trend_counts[trend] / trend_counts.sum(axis=1) * 100).round(2)
+        trend_counts_with_names[f'{trend}_pct'] = (trend_counts[trend] / trend_counts.sum(axis=1) * 100).round(2)
     
-    return trend_df, trend_counts
+    return trend_df, trend_counts_with_names
 
 def main():
     try:
         # Load the processed data
-        file_path = r'stock-analysis-project/data/processed/stock_data_with_real_dates.csv'
-        print(f"Loading data from {file_path}")
-        df = pd.read_csv(file_path)
+        print(f"Loading data from {PROCESSED_DATA_PATH}")
+        df = pd.read_csv(PROCESSED_DATA_PATH)
         
         # Convert Date to datetime
         df['Date'] = pd.to_datetime(df['Date'])
@@ -190,12 +226,14 @@ def main():
         
         # Calculate correlations
         print("Analyzing correlations...")
-        correlation_matrix = analyze_correlations(df)
+        correlation_matrix, display_corr = analyze_correlations(df)
         
-        # Save correlation matrix
+        # Save correlation matrices
         correlation_path = 'stock-analysis-project/data/analyzed/correlation_matrix.csv'
+        display_correlation_path = 'stock-analysis-project/data/analyzed/display_correlation_matrix.csv'
         correlation_matrix.to_csv(correlation_path)
-        print(f"Correlation matrix saved to {correlation_path}")
+        display_corr.to_csv(display_correlation_path)
+        print(f"Correlation matrices saved to {correlation_path} and {display_correlation_path}")
         
         # Identify trends
         print("Identifying trends...")
@@ -211,20 +249,27 @@ def main():
         
         # Get top 5 performers by 3-month return
         top_performers = performance_df.sort_values('three_month_return', ascending=False).head(5)
-        top_performers_str = "\n".join([f"- {company}: {row['three_month_return']:.2f}%" 
-                                     for company, row in top_performers.iterrows()])
         
-        # Format trend analysis
-        trend_analysis_str = "\n".join([f"- {company}: {row['Uptrend']} uptrend days, {row['Downtrend']} downtrend days, {row['Sideways']} sideways days"
-                                     for company, row in trend_counts.iterrows()])
+        # Format top performers with service names
+        top_performers_str = "\n".join([
+            f"- {row['service_name']} ({index}): {row['three_month_return']:.2f}%" 
+            for index, row in top_performers.iterrows() if 'three_month_return' in row
+        ])
+        
+        # Format trend analysis with service names
+        trend_analysis_str = "\n".join([
+            f"- {row['ServiceName']} ({company}): " +
+            f"{row['Uptrend']} uptrend days, {row['Downtrend']} downtrend days, {row['Sideways']} sideways days"
+            for company, row in trend_counts.iterrows()
+        ])
         
         report = f"""
-        # Stock Market Analysis Report
+        # Cloud Provider Stock Market Analysis Report
         
         Generated on: {timestamp}
         
         ## Dataset Summary
-        - Total companies analyzed: {df['Company'].nunique()}
+        - Total cloud providers analyzed: {df['Company'].nunique()}
         - Date range: {df['Date'].min()} to {df['Date'].max()}
         - Total data points: {len(df)}
         
@@ -234,7 +279,7 @@ def main():
         
         ## Correlation Analysis
         
-        A correlation matrix has been saved to {correlation_path}
+        A correlation matrix has been saved to {display_correlation_path}
         
         ## Trend Analysis
         
@@ -256,6 +301,8 @@ def main():
         
     except Exception as e:
         print(f"Error in analysis: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
