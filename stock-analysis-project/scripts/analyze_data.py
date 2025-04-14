@@ -82,8 +82,8 @@ def calculate_performance_metrics(df):
         company_data = company_data.sort_values('Date')
         
         # Get company and service names
-        company_name = company_data['CompanyName'].iloc[0] if 'CompanyName' in company_data else company
-        service_name = company_data['ServiceName'].iloc[0] if 'ServiceName' in company_data else company
+        company_name = company_data['CompanyName'].iloc[0] if 'CompanyName' in company_data.columns else company
+        service_name = company_data['ServiceName'].iloc[0] if 'ServiceName' in company_data.columns else company
         
         # Calculate metrics only if we have enough data
         if len(company_data) > 20:
@@ -117,7 +117,8 @@ def calculate_performance_metrics(df):
                 max_drawdown = drawdown.min()
                 
                 # Store the results
-                performance[company] = {
+                performance[company_name] = {  # Use company_name as the key instead of ticker
+                    'ticker': company,  # Store the ticker for reference
                     'company_name': company_name,
                     'service_name': service_name,
                     'latest_close': latest_close,
@@ -130,7 +131,8 @@ def calculate_performance_metrics(df):
                 }
             except Exception as e:
                 print(f"Error calculating performance for {service_name}: {e}")
-                performance[company] = {
+                performance[company_name] = {  # Use company_name as the key instead of ticker
+                    'ticker': company,  # Store the ticker for reference
                     'company_name': company_name,
                     'service_name': service_name,
                     'error': str(e)
@@ -149,16 +151,24 @@ def analyze_correlations(df):
     correlation_matrix = pivot_df.corr()
     
     # Create a version with service names for display
+    company_name_map = {}
     service_name_map = {}
     for ticker in correlation_matrix.columns:
         info = CLOUD_PROVIDERS.get(ticker, {'company': ticker, 'service': ticker})
+        company_name_map[ticker] = info['company']
         service_name_map[ticker] = info['service']
     
-    display_corr = correlation_matrix.copy()
-    display_corr.columns = [service_name_map.get(col, col) for col in display_corr.columns]
-    display_corr.index = [service_name_map.get(idx, idx) for idx in display_corr.index]
+    # Create company names version
+    company_corr = correlation_matrix.copy()
+    company_corr.columns = [company_name_map.get(col, col) for col in company_corr.columns]
+    company_corr.index = [company_name_map.get(idx, idx) for idx in company_corr.index]
     
-    return correlation_matrix, display_corr
+    # Create service names version
+    service_corr = correlation_matrix.copy()
+    service_corr.columns = [service_name_map.get(col, col) for col in service_corr.columns]
+    service_corr.index = [service_name_map.get(idx, idx) for idx in service_corr.index]
+    
+    return correlation_matrix, company_corr, service_corr
 
 def identify_trends(df):
     """Identify trends for each company based on moving averages."""
@@ -184,7 +194,9 @@ def identify_trends(df):
     trend_counts_with_names['ServiceName'] = trend_counts_with_names['Company'].apply(
         lambda x: CLOUD_PROVIDERS.get(x, {'service': x})['service']
     )
-    trend_counts_with_names = trend_counts_with_names.set_index('Company')
+    
+    # Set company name as index instead of ticker
+    trend_counts_with_names = trend_counts_with_names.set_index('CompanyName')
     
     # Calculate the percentage of each trend
     for trend in trend_counts.columns:
@@ -226,14 +238,16 @@ def main():
         
         # Calculate correlations
         print("Analyzing correlations...")
-        correlation_matrix, display_corr = analyze_correlations(df)
+        correlation_matrix, company_corr, service_corr = analyze_correlations(df)
         
         # Save correlation matrices
         correlation_path = 'stock-analysis-project/data/analyzed/correlation_matrix.csv'
-        display_correlation_path = 'stock-analysis-project/data/analyzed/display_correlation_matrix.csv'
+        company_correlation_path = 'stock-analysis-project/data/analyzed/company_correlation_matrix.csv'
+        service_correlation_path = 'stock-analysis-project/data/analyzed/service_correlation_matrix.csv'
         correlation_matrix.to_csv(correlation_path)
-        display_corr.to_csv(display_correlation_path)
-        print(f"Correlation matrices saved to {correlation_path} and {display_correlation_path}")
+        company_corr.to_csv(company_correlation_path)
+        service_corr.to_csv(service_correlation_path)
+        print(f"Correlation matrices saved to {company_correlation_path} and {service_correlation_path}")
         
         # Identify trends
         print("Identifying trends...")
@@ -250,16 +264,16 @@ def main():
         # Get top 5 performers by 3-month return
         top_performers = performance_df.sort_values('three_month_return', ascending=False).head(5)
         
-        # Format top performers with service names
+        # Format top performers with company names
         top_performers_str = "\n".join([
-            f"- {row['service_name']} ({index}): {row['three_month_return']:.2f}%" 
+            f"- {index} ({row['ticker']}): {row['three_month_return']:.2f}%" 
             for index, row in top_performers.iterrows() if 'three_month_return' in row
         ])
         
-        # Format trend analysis with service names
+        # Format trend analysis with company names (now using company names as index)
         trend_analysis_str = "\n".join([
-            f"- {row['ServiceName']} ({company}): " +
-            f"{row['Uptrend']} uptrend days, {row['Downtrend']} downtrend days, {row['Sideways']} sideways days"
+            f"- {company}: {row['Uptrend']} uptrend days, " +
+            f"{row['Downtrend']} downtrend days, {row['Sideways']} sideways days"
             for company, row in trend_counts.iterrows()
         ])
         
@@ -279,7 +293,7 @@ def main():
         
         ## Correlation Analysis
         
-        A correlation matrix has been saved to {display_correlation_path}
+        A correlation matrix has been saved to {company_correlation_path}
         
         ## Trend Analysis
         
