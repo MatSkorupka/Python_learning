@@ -1,21 +1,21 @@
-Company,Downtrend,Sideways,Uptrend,CompanyName,ServiceName,Downtrend_pct,Sideways_pct,Uptrend_pct
-AKAM,1527,2561,2314,Akamai,Akamai Cloud Computing,23.85,40.0,36.14
-AMZN,1103,2743,3176,Amazon,Amazon Web Services (AWS),15.71,39.06,45.23
-AVGO,276,1442,2228,Broadcom,VMware Cloud,6.99,36.54,56.46
-BABA,678,1078,901,Alibaba,Alibaba Cloud,25.52,40.57,33.91
-BIDU,1266,2064,1623,Baidu,Baidu AI Cloud,25.56,41.67,32.77
-CRM,537,2252,2447,Salesforce,Salesforce Cloud,10.26,43.01,46.73
-DOCN,226,620,173,DigitalOcean,DigitalOcean,22.18,60.84,16.98
-FSLY,525,650,310,Fastly,Fastly Edge Cloud,35.35,43.77,20.88
-GOOGL,661,2031,2504,Alphabet,Google Cloud Platform (GCP),12.72,39.09,48.19
-IBM,1168,3453,2930,IBM,IBM Cloud,15.47,45.73,38.8
-MDB,312,889,679,MongoDB,MongoDB Atlas,16.6,47.29,36.12
-MSFT,1016,2900,3635,Microsoft,Microsoft Azure,13.46,38.41,48.14
-NET,198,641,564,Cloudflare,Cloudflare,14.11,45.69,40.2
-ORCL,1125,3279,3147,Oracle,Oracle Cloud,14.9,43.42,41.68
-RXT,542,523,113,Rackspace,Rackspace Technology,46.01,44.4,9.59
-SAP,1154,3340,2948,SAP,SAP Cloud Platform,15.51,44.88,39.61
-SNOW,310,617,222,Snowflake,Snowflake Data Cloud,26.98,53.7,19.32
-TCEHY,640,1457,1745,Tencent,Tencent Cloud,16.66,37.92,45.42
-TWLO,584,931,699,Twilio,Twilio Cloud Communications,26.38,42.05,31.57
-WDAY,474,1438,1230,Workday,Workday Cloud Platform,15.09,45.77,39.15
+CompanyName,Company,Downtrend,Sideways,Uptrend,ServiceName,Downtrend_pct,Sideways_pct,Uptrend_pct
+Akamai,AKAM,1529,2561,2314,Akamai Cloud Computing,,,
+Amazon,AMZN,1103,2745,3176,Amazon Web Services (AWS),,,
+Broadcom,AVGO,276,1444,2228,VMware Cloud,,,
+Alibaba,BABA,678,1080,901,Alibaba Cloud,,,
+Baidu,BIDU,1266,2066,1623,Baidu AI Cloud,,,
+Salesforce,CRM,539,2252,2447,Salesforce Cloud,,,
+DigitalOcean,DOCN,226,622,173,DigitalOcean,,,
+Fastly,FSLY,527,650,310,Fastly Edge Cloud,,,
+Alphabet,GOOGL,663,2031,2504,Google Cloud Platform (GCP),,,
+IBM,IBM,1168,3453,2930,IBM Cloud,15.47,45.73,38.8
+MongoDB,MDB,314,889,679,MongoDB Atlas,,,
+Microsoft,MSFT,1018,2898,3635,Microsoft Azure,,,
+Cloudflare,NET,198,643,564,Cloudflare,,,
+Oracle,ORCL,1127,3279,3145,Oracle Cloud,,,
+Rackspace,RXT,544,523,113,Rackspace Technology,,,
+SAP,SAP,1154,3342,2948,SAP Cloud Platform,15.5,44.9,39.6
+Snowflake,SNOW,310,619,222,Snowflake Data Cloud,,,
+Tencent,TCEHY,640,1459,1745,Tencent Cloud,,,
+Twilio,TWLO,584,933,699,Twilio Cloud Communications,,,
+Workday,WDAY,474,1440,1230,Workday Cloud Platform,,,
